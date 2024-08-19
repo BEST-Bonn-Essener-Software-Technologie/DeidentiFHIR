@@ -108,6 +108,26 @@ object Handlers {
     new StringType(identifierValueReplacementProvider.getValueReplacement(system, value.getValue()))
   }
 
+  def identifierValueReplacementWithResourcetypeHandler(identifierValueReplacementProviderWithResourcetype: IdentifierValueReplacementProviderWithResourcetype, acceptNoSystem: Boolean)(path: Seq[String], value: StringType, context: Seq[Base], staticContext: Map[String, String]) = {
+
+    // the value is not unique on its own. therefore, we need to determine the identifiers system and use this as a prefix.
+    val identifier = context.last.asInstanceOf[Identifier]
+    val resourceType = context.head.asInstanceOf[Resource].getResourceType.toString
+
+    val system =
+      if(identifier.hasSystem && identifier.getSystem!=null) {
+        identifier.getSystem
+      } else {
+        if(acceptNoSystem) {
+          "<no_system>"
+        } else {
+          throw new RuntimeException(s"Identifier $identifier is missing a system, which is required for performing this replacement.")
+        }
+      }
+
+    new StringType(identifierValueReplacementProviderWithResourcetype.getValueReplacement(system, value.getValue(), resourceType))
+  }
+
   /**
    * In addition to the functionality of the referenceReplacementHandler this handler also modifies conditional references
    * which are only allowed in transaction bundles (https://www.hl7.org/fhir/http.html#trules).
